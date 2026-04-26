@@ -1,0 +1,6 @@
+interface:
+  display_name: "Screenshot Studio Toolkit"
+  short_description: "Self-contained AI image generation toolkit"
+  default_prompt: "Use $screenshot-studio-toolkit to generate App Store screenshots or batch images without opening a web app."
+policy:
+  allow_implicit_invocation: true
