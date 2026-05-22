@@ -40,6 +40,7 @@ BANANA_4K_SIZES: Dict[str, Tuple[int, int]] = {
 }
 
 DEVICE_CONFIGS: Dict[str, Tuple[str, int, int]] = {
+    "iphone_6_7_inch": ('iPhone AppStore 上架图 (6.7")', 1320, 2868),
     "iphone_6_5_inch": ('iPhone AppStore 上架图 (6.5")', 1242, 2688),
     "ipad_pro_12_9": ('iPad Pro 12.9" AppStore 上架图', 2048, 2732),
     "ipad_pro_11": ('iPad Pro 11" AppStore 上架图', 1668, 2388),
@@ -108,6 +109,26 @@ def parse_grid(grid: str) -> Tuple[int, int, int, str]:
 def is_allowed_output_grid(rows: int, cols: int) -> bool:
     total = rows * cols
     return total == 1 or total % 2 == 0 or rows == cols
+
+
+def is_yield_feasible(rows: int, cols: int, item_width: int, item_height: int, quality_tier: str = "2K") -> bool:
+    total = rows * cols
+    if not is_allowed_output_grid(rows, cols):
+        return False
+    if quality_tier.upper() == "4K" and total > 1:
+        return False
+    target_w = item_width * cols
+    target_h = item_height * rows
+    target_ratio = target_w / target_h
+    if target_ratio < 1408 / 11712 or target_ratio > 11712 / 1408:
+        return False
+    is_ipad_129 = (item_width == 2048 and item_height == 2732) or (item_width == 2732 and item_height == 2048)
+    if is_ipad_129 and total > 3:
+        return False
+    return any(
+        (target_w <= w and target_h <= h) or (target_w <= h and target_h <= w)
+        for w, h in BANANA_4K_SIZES.values()
+    )
 
 
 def closest_aspect_ratio(width: int, height: int) -> str:
@@ -207,22 +228,28 @@ def layout_instruction(mode: str, width: int, height: int, template_id: Optional
     is_phone = width < height and width / height < 0.6
     if is_phone:
         status = (
-            "Render a realistic minimalist iPhone status bar at the very top."
+            "Render a realistic minimalist iPhone status bar at the very top. Position the time (left) and the signal/wifi/battery cluster (right) so they align exactly with the edges of the central safe area (i.e., inset deeply from the absolute outer edges of the image). DO NOT push them to the extreme left/right corners of the full canvas."
             if is_appstore
             else "Do not render phone status bars, home indicators, notches, or hardware frames."
         )
         return (
-            "CRITICAL LAYOUT RULE: Create a centered composition. Keep important visual focal points "
-            f"inside the central safe area. {status} Never draw layout guides, measurements, vignettes, or borders."
+            "CRITICAL LAYOUT RULE: Create a CENTERED composition.\n"
+            "1. SAFE AREA & PADDING: Imagine a central 'safe area' that occupies the middle 70% of EACH CELL's width. ALL important visual focal points, UI elements, text, buttons, and primary subjects MUST be placed strictly inside this safe area. The left 15% and right 15% of EACH CELL MUST be left as clean, uninterrupted background or empty space. Do not add solid color bars, borders, or any structural dividers in these side margins.\n"
+            f"2. STATUS BAR POSITIONING: {status}\n"
+            "3. NON-RENDERING RULE: The percentages mentioned above (70%, 15%) are strictly for your internal spatial math. You MUST NOT render any numbers, measurement lines, layout grids, safe area boxes, or text like '15%' or 'safe area' into the actual image pixels.\n"
+            "4. NO VIGNETTES/BORDERS: Do NOT draw shadows, vignettes, dark gradients, or borders around the safe area or the absolute edges of the cells. The background must be completely seamless to the edges."
         )
     status = (
-        "Render a realistic iPadOS status bar at the top when appropriate."
+        "Render a realistic iPadOS status bar at the top, with icons appropriately inset from the corners."
         if is_appstore
         else "Do not render device status bars, bezels, or operating system interface elements."
     )
     return (
-        f"LAYOUT RULE: Create a balanced high-fidelity composition. Keep primary subjects away from margins. {status} "
-        "Never draw guides, measurements, shadows, vignettes, or borders around the edges."
+        "LAYOUT RULE: Create a balanced high-fidelity composition.\n"
+        "1. SAFE AREA: Keep all primary subjects, text, and critical focal points well away from the screen margins. Use generous margins on all four sides.\n"
+        f"2. STATUS BAR/UI: {status}\n"
+        "3. NON-RENDERING RULE: Never draw any layout guides, measurements, or annotations in the final image.\n"
+        "4. NO VIGNETTES/BORDERS: Do NOT draw shadows, vignettes, or borders around the edges of the image."
     )
 
 
@@ -270,8 +297,15 @@ def build_prompt(
             f"- Do NOT add any extra image, bonus panel, cover image, title card, header, footer, inset preview, decorative thumbnail, or partial extra cell outside those {total} cells.",
             "- Every cell must occupy one grid slot only. No merged cells, no overlapping cells, no partial extra cells.",
             "- NO GAPS, NO WHITE SPACE between grid cells. The cells must touch each other seamlessly.",
+            "- The ONLY allowed panel boundaries are the main grid lines between cells.",
+            "- Inside each cell, DO NOT split the artwork into left/right or top/bottom sub-panels.",
+            "- Inside each cell, DO NOT create a collage, diptych, before/after comparison, secondary screenshot, secondary scene, or multiple phone mockups.",
+            "- Do NOT place two feature concepts side by side inside one cell.",
+            "- Do NOT let titles, captions, waves, backgrounds, or dividers span across multiple cells.",
+            "- Each cell must have its own complete background, title area, phone/app UI area, and bottom caption area fully contained inside that cell.",
             f"FOR EACH GRID CELL (Must apply to ALL {total} images individually):",
             "1. Each cell represents a SEPARATE, COMPLETE artwork representing the brief.",
+            "1A. Each cell must be ONE unified App Store screenshot composition, not two adjacent images.",
             appstore_lines,
             f"Instruction for EACH cell: {layout}",
             f"GLOBAL CREATIVE BRIEF: {prompt}",
@@ -392,7 +426,10 @@ def poll_grsai(api_key: str, task_id: str, result_url: str, attempts: int, inter
                 return urls[0]
             raise RuntimeError("Task succeeded but no image URL was found")
         if status == "failed":
-            raise RuntimeError(f"Generation failed: {task.get('failure_reason') or task.get('error') or task}")
+            detail = task.get("failure_reason") or task.get("error")
+            if detail and detail != "error":
+                raise RuntimeError(f"Generation failed: {detail}")
+            raise RuntimeError(f"Generation failed: {json.dumps(task, ensure_ascii=False)}")
     raise TimeoutError("Generation polling timed out")
 
 
@@ -451,15 +488,27 @@ def make_plan(args: argparse.Namespace) -> Dict[str, Any]:
         raise ValueError("4K multi-output batches are disabled. Use 1K/2K or a single 4K output.")
 
     device_name, base_w, base_h, template_id = resolve_base_format(args)
-    canvas_w, canvas_h = tiered_dimensions(base_w, base_h, args.size)
-    target_w, target_h = canvas_w, canvas_h
-    canvas_size = args.size.upper()
-
-    if batch:
-        grid_w = canvas_w * cols
-        grid_h = canvas_h * rows
-        canvas_w, canvas_h = tiered_dimensions(grid_w, grid_h, "4K")
-        canvas_size = "4K"
+    is_phone_appstore = args.mode == "appstore" and base_w < base_h and base_w / base_h < 0.6
+    if batch and args.mode == "appstore":
+        feasible = is_yield_feasible(rows, cols, base_w, base_h, "2K") or is_yield_feasible(cols, rows, base_w, base_h, "2K")
+        if not feasible:
+            raise ValueError(f"Grid {grid_label} is not feasible for {args.device} ({base_w}x{base_h}) in AppStore mode.")
+    
+    if args.mode == "appstore":
+        canvas_w = base_w * cols if batch else base_w
+        canvas_h = base_h * rows if batch else base_h
+        target_w = base_w
+        target_h = base_h
+        canvas_size = "4K" if batch else args.size.upper()
+    else:
+        canvas_w, canvas_h = tiered_dimensions(base_w, base_h, args.size)
+        target_w, target_h = canvas_w, canvas_h
+        canvas_size = args.size.upper()
+        if batch:
+            grid_w = canvas_w * cols
+            grid_h = canvas_h * rows
+            canvas_w, canvas_h = tiered_dimensions(grid_w, grid_h, "4K")
+            canvas_size = "4K"
 
     urls = [reference_to_url(v) for v in args.reference]
     prompt = build_prompt(
@@ -569,7 +618,7 @@ def print_json(data: Dict[str, Any]) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser(description="Standalone Screenshot Studio Pro generator for agents.")
     parser.add_argument("--prompt", required=True, help="Creative brief.")
-    parser.add_argument("--model", default="nano-banana", help="Grsai model, e.g. nano-banana or gpt-image-2.")
+    parser.add_argument("--model", default="nano-banana", help="Grsai model, e.g. nano-banana, gpt-image-2, or gpt-image-2-vip.")
     parser.add_argument("--mode", choices=["appstore", "general", "marketing", "portrait", "commercial"], default="general")
     parser.add_argument("--device", choices=sorted(DEVICE_CONFIGS), default="iphone_6_5_inch")
     parser.add_argument("--ratio", choices=sorted(GENERAL_RATIOS), default="1:1")

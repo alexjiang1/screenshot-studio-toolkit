@@ -1,9 +1,9 @@
 ---
-name: screenshot-studio-toolkit
-description: Self-contained AI image production toolkit for agent-generated app store screenshots and marketing images. Use when Codex or another agent needs to generate App Store screenshots, marketing images, portrait/commercial templates, Grsai Banana or GPT Image2 images, reference-image generations, 1K/2K/4K outputs, batch grids, or local resize/crop/split exports without opening a React app.
+name: screenshot-studio-pro
+description: Self-contained AI image production toolkit for Screenshot Studio Pro-style outputs. Use when Codex or another agent needs to generate App Store screenshots, marketing images, portrait/commercial templates, Grsai Banana or GPT Image2 images, reference-image generations, 1K/2K/4K outputs, batch grids, or local resize/crop/split exports without opening the original React app.
 ---
 
-# Screenshot Studio Toolkit
+# Screenshot Studio Pro
 
 ## Purpose
 
@@ -12,7 +12,7 @@ Use this skill as a self-contained image production toolchain. It can run withou
 The primary executable is:
 
 ```bash
-scripts/studio_generate.py
+/Users/jiangfei/.codex/skills/screenshot-studio-pro/scripts/studio_generate.py
 ```
 
 The core workflow is:
@@ -44,7 +44,7 @@ export GRSAI_RESULT_URL="https://your-provider.example/v1/draw/result"
 Preview a Banana batch request without network calls:
 
 ```bash
-python3 scripts/studio_generate.py \
+python3 /Users/jiangfei/.codex/skills/screenshot-studio-pro/scripts/studio_generate.py \
   --prompt "亚洲拉拉队球场热舞" \
   --model nano-banana \
   --mode general \
@@ -58,7 +58,7 @@ python3 scripts/studio_generate.py \
 Generate and split a Banana batch:
 
 ```bash
-python3 scripts/studio_generate.py \
+python3 /Users/jiangfei/.codex/skills/screenshot-studio-pro/scripts/studio_generate.py \
   --prompt "亚洲拉拉队球场热舞" \
   --model nano-banana \
   --mode general \
@@ -73,7 +73,7 @@ python3 scripts/studio_generate.py \
 Generate with GPT Image2:
 
 ```bash
-python3 scripts/studio_generate.py \
+python3 /Users/jiangfei/.codex/skills/screenshot-studio-pro/scripts/studio_generate.py \
   --prompt "美女写真" \
   --model gpt-image-2 \
   --mode general \
@@ -83,14 +83,29 @@ python3 scripts/studio_generate.py \
   --prefix portrait
 ```
 
+Generate with GPT Image2 VIP using the normal Grsai 1K/2K/4K path:
+
+```bash
+python3 /Users/jiangfei/.codex/skills/screenshot-studio-pro/scripts/studio_generate.py \
+  --prompt "高端移动应用上架图，干净科技感" \
+  --model gpt-image-2-vip \
+  --mode appstore \
+  --device iphone_6_7_inch \
+  --size 4K \
+  --grid 2x2 \
+  --count 4 \
+  --out ./outputs \
+  --prefix appstore_vip
+```
+
 Generate an App Store screenshot:
 
 ```bash
-python3 scripts/studio_generate.py \
+python3 /Users/jiangfei/.codex/skills/screenshot-studio-pro/scripts/studio_generate.py \
   --prompt "生成带状态栏的iPhone上架图，体现家长管理孩子玩pad的无奈" \
   --model nano-banana \
   --mode appstore \
-  --device iphone_6_5_inch \
+  --device iphone_6_7_inch \
   --size 4K \
   --out ./outputs \
   --prefix appstore
@@ -101,7 +116,7 @@ Add reference images by repeating `--reference` with URLs, data URLs, or local f
 Use a custom provider URL directly:
 
 ```bash
-python3 scripts/studio_generate.py \
+python3 /Users/jiangfei/.codex/skills/screenshot-studio-pro/scripts/studio_generate.py \
   --prompt "美女写真" \
   --model gpt-image-2 \
   --mode general \
@@ -128,7 +143,7 @@ python3 scripts/studio_generate.py \
 Useful flags:
 
 - `--dry-run`: print the plan and exact request body; do not call the network.
-- `--model`: `nano-banana`, `nano-banana-pro`, `nano-banana-2`, `gpt-image-2`, etc.
+- `--model`: `nano-banana`, `nano-banana-pro`, `nano-banana-2`, `gpt-image-2`, `gpt-image-2-vip`, etc.
 - `--mode`: `appstore`, `general`, `marketing`, `portrait`, `commercial`.
 - `--ratio`: general mode ratio such as `1:1`, `9:16`, `16:9`.
 - `--template`: template id for marketing/portrait/commercial modes.
@@ -189,13 +204,13 @@ Use the in-app browser for localhost testing only when UI behavior matters:
 http://localhost:3000/
 ```
 
-Prefer `npm run lint` and `npm run build` after app edits. `npm run dev` runs on port 3000.
+Prefer `npm run lint` and `npm run build` after original app code changes. `npm run dev` runs on port 3000.
 
 ## Scene Modes
 
 Use these modes when constructing or debugging payloads:
 
-- `appstore`: App Store screenshots and store assets. Uses device sizes such as iPhone 6.5, iPad, app icon, Google Play, Steam, Chrome promo. AppStore mode must preserve exact final device pixels.
+- `appstore`: App Store screenshots and store assets. Uses device sizes such as iPhone 6.7 (`iphone_6_7_inch`, 1320×2868), iPhone 6.5, iPad, app icon, Google Play, Steam, Chrome promo. AppStore mode must preserve exact final device pixels.
 - `general`: freeform aspect ratios from `GENERAL_RATIOS`, scaled by 1K/2K/4K.
 - `marketing`: YouTube banner, OG image, IG story, webtoon, 2/4-slide carousel.
 - `portrait`: business headshot, glamour portrait, passport photo.
@@ -223,6 +238,7 @@ Important behavior:
 
 - Send `aspectRatio` from canvas width/height via `convertSizeToAspectRatio`.
 - Send `imageSize` for Banana unless unavailable; batch usually forces provider canvas to `4K`.
+- Treat `gpt-image-2-vip` as a Banana-compatible Grsai model for routing and sizing: use `/v1/draw/nano-banana`, send `aspectRatio` plus `imageSize`, and allow 1K/2K/4K grid slicing.
 - Domestic endpoint may be used for Banana when enabled.
 - Poll `/v1/draw/result` until success.
 
@@ -246,6 +262,7 @@ GPT Image2 must not receive Banana's `aspectRatio` or `imageSize` schema. Use th
 
 Important behavior:
 
+- This special rule applies only to plain `gpt-image-2`, not `gpt-image-2-vip`.
 - Use `/v1/draw/completions`.
 - Force `size: "auto"` and `variants: 1`.
 - Disable domestic endpoint.
