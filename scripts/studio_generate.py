@@ -515,7 +515,7 @@ def make_plan(args: argparse.Namespace) -> Dict[str, Any]:
         mode=args.mode,
         prompt=args.prompt,
         width=base_w if args.mode == "appstore" else canvas_w,
-        height=base_h if args.mode == "appstore" else canvas_h,
+        height=base_h if args.mode == "appstore" else base_h,
         image_size=canvas_size,
         batch=batch,
         rows=rows,

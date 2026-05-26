@@ -204,7 +204,7 @@ Use the in-app browser for localhost testing only when UI behavior matters:
 http://localhost:3000/
 ```
 
-Prefer `npm run lint` and `npm run build` after original app code changes. `npm run dev` runs on port 3000.
+Prefer `npm run lint` and `npm run build` after app edits. `npm run dev` runs on port 3000.
 
 ## Scene Modes
 
