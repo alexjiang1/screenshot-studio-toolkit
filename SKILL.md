@@ -143,7 +143,7 @@ python3 /Users/jiangfei/.codex/skills/screenshot-studio-pro/scripts/studio_gener
 Useful flags:
 
 - `--dry-run`: print the plan and exact request body; do not call the network.
-- `--model`: `nano-banana`, `nano-banana-pro`, `nano-banana-2`, `gpt-image-2`, `gpt-image-2-vip`, etc.
+- `--model`: `nano-banana-fast`, `nano-banana`, `nano-banana-pro`, `nano-banana-2`, `gpt-image-2`, `gpt-image-2-vip`, etc.
 - `--mode`: `appstore`, `general`, `marketing`, `portrait`, `commercial`.
 - `--ratio`: general mode ratio such as `1:1`, `9:16`, `16:9`.
 - `--template`: template id for marketing/portrait/commercial modes.
