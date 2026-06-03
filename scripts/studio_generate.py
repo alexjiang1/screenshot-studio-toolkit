@@ -377,8 +377,12 @@ def clean_base_url(value: str) -> str:
 
 def normalize_grsai_model(model: str) -> str:
     selected_model = str(model or "").strip()
-    if not selected_model or selected_model == "nano-banana" or selected_model not in SUPPORTED_GRSAI_MODELS:
+    if not selected_model:
         return DEFAULT_GRSAI_MODEL
+    if selected_model == "nano-banana":
+        raise ValueError("Unsupported legacy model. Use nano-banana-fast, nano-banana-2, or nano-banana-pro.")
+    if selected_model not in SUPPORTED_GRSAI_MODELS:
+        raise ValueError(f"Unsupported Grsai model: {selected_model}")
     return selected_model
 
 

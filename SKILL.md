@@ -36,7 +36,7 @@ Optional custom provider base URLs:
 
 ```bash
 export GRSAI_BASE_URL="https://your-provider.example"
-export GRSAI_DRAW_URL="https://your-provider.example/v1/draw/nano-banana"
+export GRSAI_DRAW_URL="https://your-provider.example/v1/draw/banana-endpoint"
 export GRSAI_GPT_IMAGE2_DRAW_URL="https://your-provider.example/v1/draw/completions"
 export GRSAI_RESULT_URL="https://your-provider.example/v1/draw/result"
 ```
@@ -156,7 +156,7 @@ Useful flags:
 - `--api-key`: provider API key. Defaults to `GRSAI_API_KEY`.
 - `--base-url`: custom provider base URL. Defaults to `GRSAI_BASE_URL` or `https://grsaiapi.com`.
 - `--domestic-base-url`: custom domestic base URL. Defaults to `GRSAI_DOMESTIC_BASE_URL`.
-- `--draw-url`: full custom Banana draw endpoint. Defaults to `GRSAI_DRAW_URL` or `<base-url>/v1/draw/nano-banana`.
+- `--draw-url`: full custom Banana draw endpoint. Defaults to `GRSAI_DRAW_URL` or the configured Banana draw route.
 - `--gpt-image2-draw-url`: full custom GPT Image2 draw endpoint. Defaults to `GRSAI_GPT_IMAGE2_DRAW_URL` or `<base-url>/v1/draw/completions`.
 - `--result-url`: full custom polling endpoint. Defaults to `GRSAI_RESULT_URL` or `<base-url>/v1/draw/result`.
 - `--save-raw`: also save the provider's raw composite image.
@@ -239,7 +239,7 @@ Important behavior:
 
 - Send `aspectRatio` from canvas width/height via `convertSizeToAspectRatio`.
 - Send `imageSize` for Banana unless unavailable; batch usually forces provider canvas to `4K`.
-- Treat `gpt-image-2-vip` as a Banana-compatible Grsai model for routing and sizing: use `/v1/draw/nano-banana`, send `aspectRatio` plus `imageSize`, and allow 1K/2K/4K grid slicing.
+- Treat `gpt-image-2-vip` as a Banana-compatible Grsai model for routing and sizing: use the Banana draw endpoint, send `aspectRatio` plus `imageSize`, and allow 1K/2K/4K grid slicing.
 - Domestic endpoint may be used for Banana when enabled.
 - Poll `/v1/draw/result` until success.
 
@@ -384,7 +384,7 @@ For provider errors:
 - Log or inspect the actual request body.
 - Compare GPT Image2 body against the exact `size:auto` schema above.
 - Confirm GPT Image2 uses `/v1/draw/completions`.
-- Confirm Banana uses `/v1/draw/nano-banana`.
+- Confirm Banana uses the configured Banana draw endpoint.
 - Confirm domestic endpoint is disabled for GPT Image2.
 
 For wrong output count:
