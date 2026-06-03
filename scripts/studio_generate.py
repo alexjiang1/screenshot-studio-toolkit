@@ -19,6 +19,16 @@ from PIL import Image
 
 GRSAI_BASE = "https://grsaiapi.com"
 GRSAI_DOMESTIC_BASE = "https://grsai.dakka.com.cn"
+DEFAULT_GRSAI_MODEL = "nano-banana-fast"
+SUPPORTED_GRSAI_MODELS = {
+    "nano-banana-fast",
+    "nano-banana-pro",
+    "nano-banana-2",
+    "gpt-image-1.5",
+    "gpt-image-2",
+    "gpt-image-2-vip",
+    "sora-image",
+}
 
 BANANA_4K_SIZES: Dict[str, Tuple[int, int]] = {
     "auto": (5632, 3072),
@@ -365,6 +375,13 @@ def clean_base_url(value: str) -> str:
     return value.rstrip("/")
 
 
+def normalize_grsai_model(model: str) -> str:
+    selected_model = str(model or "").strip()
+    if not selected_model or selected_model == "nano-banana" or selected_model not in SUPPORTED_GRSAI_MODELS:
+        return DEFAULT_GRSAI_MODEL
+    return selected_model
+
+
 def configured_base_url(args: argparse.Namespace, *, domestic: bool = False) -> str:
     if domestic:
         value = args.domestic_base_url or os.environ.get("GRSAI_DOMESTIC_BASE_URL") or GRSAI_DOMESTIC_BASE
@@ -473,7 +490,7 @@ def resolve_base_format(args: argparse.Namespace) -> Tuple[str, int, int, Option
 
 
 def make_plan(args: argparse.Namespace) -> Dict[str, Any]:
-    selected_model = args.model.strip()
+    selected_model = normalize_grsai_model(args.model)
     is_gpt_image2 = selected_model == "gpt-image-2"
     rows, cols, total, grid_label = parse_grid(args.grid)
     batch = args.count != 1 or grid_label != "1x1"
@@ -488,7 +505,6 @@ def make_plan(args: argparse.Namespace) -> Dict[str, Any]:
         raise ValueError("4K multi-output batches are disabled. Use 1K/2K or a single 4K output.")
 
     device_name, base_w, base_h, template_id = resolve_base_format(args)
-    is_phone_appstore = args.mode == "appstore" and base_w < base_h and base_w / base_h < 0.6
     if batch and args.mode == "appstore":
         feasible = is_yield_feasible(rows, cols, base_w, base_h, "2K") or is_yield_feasible(cols, rows, base_w, base_h, "2K")
         if not feasible:
@@ -618,7 +634,7 @@ def print_json(data: Dict[str, Any]) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser(description="Standalone Screenshot Studio Pro generator for agents.")
     parser.add_argument("--prompt", required=True, help="Creative brief.")
-    parser.add_argument("--model", default="nano-banana", help="Grsai model, e.g. nano-banana, gpt-image-2, or gpt-image-2-vip.")
+    parser.add_argument("--model", default=DEFAULT_GRSAI_MODEL, help="Grsai model, e.g. nano-banana-fast, nano-banana-2, nano-banana-pro, gpt-image-2, or gpt-image-2-vip.")
     parser.add_argument("--mode", choices=["appstore", "general", "marketing", "portrait", "commercial"], default="general")
     parser.add_argument("--device", choices=sorted(DEVICE_CONFIGS), default="iphone_6_5_inch")
     parser.add_argument("--ratio", choices=sorted(GENERAL_RATIOS), default="1:1")

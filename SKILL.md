@@ -46,7 +46,7 @@ Preview a Banana batch request without network calls:
 ```bash
 python3 /Users/jiangfei/.codex/skills/screenshot-studio-pro/scripts/studio_generate.py \
   --prompt "亚洲拉拉队球场热舞" \
-  --model nano-banana \
+  --model nano-banana-fast \
   --mode general \
   --ratio "1:1" \
   --size 2K \
@@ -60,7 +60,7 @@ Generate and split a Banana batch:
 ```bash
 python3 /Users/jiangfei/.codex/skills/screenshot-studio-pro/scripts/studio_generate.py \
   --prompt "亚洲拉拉队球场热舞" \
-  --model nano-banana \
+  --model nano-banana-2 \
   --mode general \
   --ratio "1:1" \
   --size 2K \
@@ -103,7 +103,7 @@ Generate an App Store screenshot:
 ```bash
 python3 /Users/jiangfei/.codex/skills/screenshot-studio-pro/scripts/studio_generate.py \
   --prompt "生成带状态栏的iPhone上架图，体现家长管理孩子玩pad的无奈" \
-  --model nano-banana \
+  --model nano-banana-2 \
   --mode appstore \
   --device iphone_6_7_inch \
   --size 4K \
@@ -143,7 +143,8 @@ python3 /Users/jiangfei/.codex/skills/screenshot-studio-pro/scripts/studio_gener
 Useful flags:
 
 - `--dry-run`: print the plan and exact request body; do not call the network.
-- `--model`: `nano-banana-fast`, `nano-banana`, `nano-banana-pro`, `nano-banana-2`, `gpt-image-2`, `gpt-image-2-vip`, etc.
+- `--model`: `nano-banana-fast`, `nano-banana-2`, `nano-banana-pro`, `gpt-image-2`, `gpt-image-2-vip`, etc.
+- Model guidance: use `nano-banana-fast` for single-image quick drafts, use `nano-banana-2` for 4K output or any workflow that will be sliced into multiple final images, and keep `nano-banana-pro` as the backup option.
 - `--mode`: `appstore`, `general`, `marketing`, `portrait`, `commercial`.
 - `--ratio`: general mode ratio such as `1:1`, `9:16`, `16:9`.
 - `--template`: template id for marketing/portrait/commercial modes.
@@ -224,7 +225,7 @@ Banana-like models use:
 
 ```json
 {
-  "model": "nano-banana",
+  "model": "nano-banana-fast",
   "prompt": "...",
   "aspectRatio": "1:1",
   "imageSize": "2K",
