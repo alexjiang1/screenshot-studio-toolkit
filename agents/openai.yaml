@@ -2,5 +2,17 @@ interface:
   display_name: "Screenshot Studio Pro"
   short_description: "Self-contained AI image generation toolkit with Banana model guidance"
   default_prompt: "Use $screenshot-studio-pro to generate App Store screenshots or batch images without opening the original web app. Model guidance: use nano-banana-fast for single-image quick drafts, use nano-banana-2 for 4K output or any workflow that will be sliced into multiple final images, and keep nano-banana-pro as the backup option."
+models:
+  default_model: "nano-banana-fast"
+  available_models:
+    - id: "nano-banana-fast"
+      priority: 1
+      recommended_for: "single-image quick drafts"
+    - id: "nano-banana-2"
+      priority: 2
+      recommended_for: "4K generation and any workflow that will be sliced into multiple final images"
+    - id: "nano-banana-pro"
+      priority: 3
+      recommended_for: "backup option"
 policy:
   allow_implicit_invocation: true
